@@ -1,0 +1,170 @@
+<% include ./partials/header.ejs %>
+
+    <div style="width: 50%; height: 100%; background-image: url('https://images.unsplash.com/photo-1529158062015-cad636e205a0?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=691&q=80'); background-size: cover; background-position-y: -240px; box-shadow: 5px 0px 30px grey;">
+    </div>
+
+    <p id='heading'>BOOKSHARE</p>
+
+ <div id="mnbx" style='box-shadow: 5px 5px 30px grey;width: 20%;height: 81%;' class="pl-3 pt-1 pr-3">
+        <% if(!(msg.length==0)) { %>
+            <div class="alert alert-success" role="alert">
+                   <%= msg %>
+            </div>
+        <% } %> 
+
+        <% if(!(msg2.length==0)) { %>
+            <div class="alert alert-danger" role="alert">
+                   <%= msg2 %>
+            </div>
+        <% } %> 
+
+        <div id='passalert' class="alert alert-danger" role="alert">
+         The password doesn't match   
+        </div>
+          
+        <div id='passalert2' class="alert alert-danger" role="alert">
+            Please confirm the password  
+        </div>
+           
+
+        <form action="/signup" method="POST" >
+    
+    <h1 style="color: rgb(153, 155, 152);">SIGN UP</h1>
+       
+          <label style='display: block' for="suemail" class="mt-3">User</label>
+        <input  id='suemail' type="text" name='username' placeholder="username" required>
+        <div class="alert alert-success" id='useralert'  role="alert">
+            username available
+        </div>
+        <div id='useralert2' class="alert alert-danger" role="alert">
+            Sorry username unavailable
+        </div>
+        <label style='display: block;' class="mt-3" for="supassword">Password</label>
+        <input style="display: block;"  id='supassword' name='password' type="password" placeholder="password" required>
+
+        <div id='passcheck' class="alert alert-danger" role="alert">
+            Your password must have a special character and an Uppercase alpahbet and a Number
+        </div>
+
+        <label style='display: block;' class="mt-3" for="supassword2">Confirm Password</label>
+        <input style="display: block;"  id='supassword2' name='password1' type="password" placeholder=" confirm password" required>
+
+        <label style='display: block;' class="mt-3" for="suhostel">Hostel </label>
+        <input style="display: block;"  id='suhostel' name='hostel' type="text" placeholder="hostel" required>
+
+        <label style='display: block;' class="mt-3" for="sunumber">Mobile Number</label>
+        <input style="display: block;"  id='sunumber' name='mnumber' type="number" placeholder='Mobile Number' required>
+        <div id='numalert2' class="alert alert-danger" role="alert">
+            Sorry the mobile number has been registered
+        </div>
+        <div id='numalert3' class="alert alert-danger" role="alert">
+           Please enter a valid mobile number
+        </div>
+        <label style='display: block;' class="mt-3" for="suyear">Year of Study</label>
+        <input style="display: block;"  id='suyear' name='year' type="number" placeholder='year of study' required>
+
+        <button class="btn btn-info mt-3" >Submit</button>
+       </form>
+       <a id = 'link' href="/login" style="display: inline-block; margin-top: 5px;" > Already a memeber - login</a>
+       
+    </div>
+</div>
+
+<script>
+
+let xhr = new  XMLHttpRequest();
+
+xhr.onload = function(){
+$(`#useralert`).hide();
+$(`#useralert2`).hide();
+if(this.responseText=='notok')
+$(`#useralert2`).show();
+else
+$(`#useralert`).show();
+}
+
+$(`#passalert`).hide();
+$(`#passalert2`).hide();
+$(`#useralert`).hide();
+$(`#useralert2`).hide();
+$(`#passcheck`).hide();
+$(`#numalert2`).hide();
+$(`#numalert3`).hide();
+$(`#suhostel`).on(`keypress`, function(){
+if($(`#supassword2`).val()){
+    $(`#passalert`).hide();
+    $(`#passalert2`).hide();
+    if($(`#supassword`).val()!=$(`#supassword2`).val()){
+        $(`#supassword2`).val(null);
+        $(`#passalert`).show(1000);
+    }
+} else {
+    $(`#passalert`).hide();
+    $(`#passalert2`).hide();
+$(`#passalert2`).show(1000);
+}
+});
+
+
+$(`#suemail`).on(`keyup`, function(){
+    if($(this).val()){
+    xhr.open(`POST`, `/requser`, false);
+    xhr.setRequestHeader(`Content-Type`, `application/x-www-form-urlencoded`);
+    xhr.send(`username=${$(this).val()}`);
+    }
+    else{
+$(`#useralert`).hide();
+$(`#useralert2`).hide();
+    }
+});
+
+$(`#supassword`).on(`keydown`, function(){
+$(`#useralert`).hide();
+$(`#useralert2`).hide();
+});
+
+$(`#supassword2`).on(`keydown`, ()=>{
+    $(`#passcheck`).hide();
+    let pass = $(`#supassword`).val();
+    console.log(pass);
+    let re =  /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/g;
+    let re2 = /[0-9]/g;
+    let re3 = /[A-Z]/g;
+    let fircon = re.test(pass);
+    let seccon = re2.test(pass);
+    let thicon = re3.test(pass);
+    if(fircon&&seccon&&thicon){
+    console.log('success')
+    }  else {
+    $(`#passcheck`).show(1000);
+    }
+ });
+$(`#sunumber`).on(`keyup`, function(){
+    $(`#numalert2`).hide();
+$.ajax({ 
+    url: `/getmbno`,
+    type: `POST`,
+    async: true,
+    contentType: `application/x-www-form-urlencoded`,
+    success: function(result){
+        if(result=='notok'){
+            $(`#numalert2`).show(1000);
+        }
+        console.log(result);
+    },
+    data: `mnum=${$('#sunumber').val()}`
+});
+});
+
+$(`#suyear`).on(`keydown`, ()=>{
+    $(`#numalert3`).hide(1000);  
+if($('#sunumber').val()/1000000000<1||$('#sunumber').val()/1000000000>10){
+    $('#sunumber').val(null);
+    $(`#numalert3`).show(1000);  
+}
+});
+
+</script>
+
+<% include ./partials/footer.ejs %>
+

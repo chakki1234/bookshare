@@ -1,0 +1,96 @@
+#mnbx{
+    position: absolute;
+    left: 70%;
+    top: 18%;
+}
+
+#heading{
+    position: absolute;
+    width: 30%;
+    height: 10%;
+    top: 5%;
+    left: 68%;
+    font-size: 4rem;
+    color: rgb(153, 155, 152);
+  
+}
+
+.myab{
+    display: none;
+}
+
+a.nav-link{
+    color: white;
+}
+
+a.navbar-brand{
+    color: white;
+}
+
+#srchtohide{
+    display: none;
+}
+
+@media screen and (max-width: 1006px){
+    button[class*='requestbtn'] {
+     width: 30%;
+    }
+    .alertnoinfo{
+        font-size: 1rem;
+     }
+    }
+
+@media screen and (max-width: 808px){
+    .clickhrtocont{
+        width: 25%;
+    }
+}    
+
+@media screen and (max-width: 886px){
+    .lenderhd{
+        font-size: 1.5rem;
+    }
+}
+
+@media screen and (max-width: 1312px){
+    #heading{
+        font-size: 3rem;
+    }
+}
+
+@media screen and (max-width: 996px){
+    .myab{
+        display: inline-block;
+    }
+    .navitem{
+        display: none;
+    }
+}
+
+@media screen and (max-width: 1534px){
+    button[id*='statusinfobtn']{
+       display: block;
+    }
+    button[id*='contactbtn']{
+        display: block;
+        margin-top: 1%;
+    }
+}
+
+@media screen and (max-width: 1060px){
+    h4[id*='collectedrpt']{
+        font-size: 1rem;
+    }
+    h4[id*='returninfotag']{
+        font-size: 1rem;
+    }
+}
+
+@media screen and (max-width: 1508px){
+    h4[id*='collinfob']{
+        font-size: 1rem;
+    }
+    h4[id*='returninfob']{
+        font-size: 1rem;
+    }
+}

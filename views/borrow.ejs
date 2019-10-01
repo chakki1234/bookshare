@@ -1,0 +1,131 @@
+<% include ./partials/headernav.ejs %>
+
+<script>
+$(`#srchtohide`).show();
+
+let parsed,
+    current = new Date(),
+    countno = 0,
+    searchval,
+    result;
+
+let xhr =  new XMLHttpRequest();
+let xhr2 = new XMLHttpRequest();
+
+xhr.onload = function(){
+  parsed = JSON.parse(this.responseText);
+  console.log(parsed);
+  parsed.sort(function(a, b) {
+  if(a.brdate>b.brdate){
+    return -1;
+  }
+  if(a.brdate<b.brdate){
+    return 1;
+  }
+  if(+a.brdate==(+b.brdate)){
+    return 0;
+  }
+});
+if(parsed.length==0){
+  $(`<div  style="width: 40%; height: 8%; margin: 3% auto; box-shadow: 5px 5px 20px grey; color: rgb(153, 155, 152);  ">
+     <h3  class='alertnoinfo'style='width: 60%; height: 10%; margin: auto;' >No information added to database</h3>
+    </div>`).appendTo($(`body`));
+}  
+}
+
+xhr.open(`POST`, `/ldetails`, false);
+xhr.send();
+
+
+for(let i=parsed.length-1;i>=0;--i){
+
+let chdt = new Date(`${parsed[i].brdate}`);
+
+if(chdt>current){    
+    if(parsed[i].status!='taken'){
+    countno = 1;
+    $(`<div id='bx${i}' style="width: 40%; height: 40%; margin: 3% auto; box-shadow: 5px 5px 20px grey; color: rgb(153, 155, 152);" class="p-2">
+<img src="${parsed[i].picpath}" alt="No image" style="width: 40%; height:100%;float: left; margin-right: 10px;" >
+<h1 style="display: inline-block; margin-left: 10%; max-width: 40%; max-height: 15%; overflow: scroll;" >${parsed[i].btitle}</h1>
+<div>
+<span style=' max-width: 40%; display: block; overflow: scroll;'>${parsed[i].bdes}</span>
+<span style="display: block; margin-top: 5%; overflow: scroll;">Lender: ${parsed[i].lendernm}</span>
+<span style="display: block; margin-top: 5%;">Upto: ${parsed[i].brdate}</span>
+<a href="/borrowreq/${parsed[i]._id}" style='margin-top: 5%;' class="btn btn-dark clickhrtocont">Click here to contact</a>
+</div>
+</div>
+`).appendTo($(`body`));
+if(`${parsed[i].lendernm}`=='<%=user%>'){
+$(`<a id='delbtn${i}' href='/dellend/${parsed[i]._id}'  class='btn btn-danger mt-3'>Delete</a>`).appendTo($(`#bx${i}`));
+}
+}
+}
+}
+
+if(countno == 0){
+  $(`div`).hide();
+  $(`<div  style="width: 40%; height: 8%; margin: 3% auto; box-shadow: 5px 5px 20px grey; color: rgb(153, 155, 152);  ">
+     <h3 class='alertnoinfo' style='width: 60%; height: 10%; margin: auto;' >No information added to database</h3>
+    </div>`).appendTo($(`body`));  
+}
+
+$(`#searchbar`).on(`keyup`, function(){
+  console.log(`hello`);
+  searchval = $(this).val();
+  if($(this).val()=='')
+  {
+    location.reload();
+  } else { 
+  xhr2.onload = function(){
+    $(`div`).hide();
+   if(this.responseText=='null'){
+    $(`<div  style="width: 40%; height: 8%; margin: 3% auto; box-shadow: 5px 5px 20px grey; color: rgb(153, 155, 152);  ">
+     <h3 class='alertnoinfo' style='width: 60%; height: 10%; margin: auto;' >Nothing matches the search</h3>
+    </div>`).appendTo($(`body`));
+   }else{ 
+    result = JSON.parse(this.responseText);
+    for(let i=result.length-1;i>=0;--i){
+
+let chdt2 = new Date(`${result[i].brdate}`);
+
+if(chdt2>current){    
+    if(result[i].status!='taken'){
+     if(`${result[i].lendernm}`=='<%=user%>'){
+$(`<div style="width: 40%; height: 40%; margin: 3% auto; box-shadow: 5px 5px 20px grey; color: rgb(153, 155, 152);" class="p-2">
+<img src="${result[i].picpath}" alt="No image" style="width: 40%; height:100%;float: left; margin-right: 10px;" >
+<h1 style="display: inline-block; margin-left: 17%;" >${result[i].btitle}</h1>
+<div>
+<span>${result[i].bdes}</span>
+<span style="display: block; margin-top: 5%;">Lender: ${result[i].lendernm}</span>
+<span style="display: block; margin-top: 5%;">Upto: ${result[i].brdate}</span>
+<a href="/borrowreq/${result[i]._id}" style='margin-top: 5%;' class="btn btn-dark">Click here to contact</a>
+</div>
+<a  href='/dellend/${result[i]._id}'  class='btn btn-danger mt-3'>Delete</a>
+</div>`).appendTo($(`body`));
+ }else{
+    $(`<div style="width: 40%; height: 40%; margin: 3% auto; box-shadow: 5px 5px 20px grey; color: rgb(153, 155, 152);" class="p-2">
+<img src="${result[i].picpath}" alt="No image" style="width: 40%; height:100%;float: left; margin-right: 10px;" >
+<h1 style="display: inline-block; margin-left: 17%;" >${result[i].btitle}</h1>
+<div>
+<span>${result[i].bdes}</span>
+<span style="display: block; margin-top: 5%;">Lender: ${result[i].lendernm}</span>
+<span style="display: block; margin-top: 5%;">Upto: ${result[i].brdate}</span>
+<a href="/borrowreq/${result[i]._id}" style='margin-top: 5%;' class="btn btn-dark">Click here to contact</a>
+</div>
+</div>
+`).appendTo($(`body`));
+    }
+}
+}
+}
+}
+}
+  xhr2.open(`POST`, `/getlendbytitle`, true);
+  xhr2.setRequestHeader(`Content-Type`, `application/x-www-form-urlencoded`);
+  xhr2.send(`title=${searchval}`);
+}
+});
+
+</script>
+
+<% include ./partials/footer.ejs %>

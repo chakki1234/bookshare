@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8' />
+    <title>Location</title>
+    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+    <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v1.1.1/mapbox-gl.js'></script>
+    <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v1.1.1/mapbox-gl.css' rel='stylesheet' />
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"
+  integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
+  crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.7.2/animate.min.css">
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+  <link rel="stylesheet" href="/style.css">   
+  <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+  <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v1.1.1/mapbox-gl.js'></script>
+<link href='https://api.tiles.mapbox.com/mapbox-gl-js/v1.1.1/mapbox-gl.css' rel='stylesheet'/>
+</head>
+
+<body style="height: 100%; width: 100%;" >
+  <nav style="background-color: #232323; height: 5%" class="d-flex flex-row pl-3 align-items-center">
+    <a class="navbar-brand" href="#">BOOKSHARE</a>
+    <a class="nav-link navitem" href="/dashboard">Home</a>
+    <a class="nav-link navitem" href="/lend">Lend</a>
+    <a class="nav-link navitem" href="/borrow">Borrow</a>
+    <a class='nav-link navitem' href='/giveaccessloc' >Add your location</a>
+    <a class="nav-link navitem" href="/logout">Logout</a>
+    <a class="nav-link navitem" href="#" >Signed in as: <%=user%></a>
+    <input id='srchtohide' style='position: absolute; left: 80%;' type="text"  id='searchbar' placeholder="search">
+    <li class="nav-item dropdown myab">
+        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+       Menu
+        </a>
+        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+          <a class="dropdown-item" href="/dashboard">Home</a>
+          <a class="dropdown-item" href="/lend">Lend</a>
+          <a class="dropdown-item" href="/borrow">Borrow</a>
+          <a class="dropdown-item" href='/giveaccessloc' >Add your location</a>
+          <a class="dropdown-item" href="/logout">Logout</a>
+          <a class="dropdown-item" href="#" >Signed in as: <%=user%></a>
+        </div>
+     </li>
+</nav>
+
+
+<h1 style='color:  rgb(153, 155, 152); text-align: center; font-size: 4rem; margin-top: 5%;'>Location</h1>
+<hr style='width: 50%'>
+
+<div id='notify' class="alert alert-success container" role="alert">
+        Saved Location  
+</div>
+         
+
+<div id='map' style='position:absolute; top:30%; left: 25%; width:50%; height: 50%; margin-top: 2%;'></div>
+<button  style="position: absolute; top: 85%; left: 30%;" id='savebtn' class="btn btn-dark">Save Location</button>
+
+<script>
+
+let changed = 0;
+var lnglat;
+
+$(`#notify`).hide();
+
+navigator.geolocation.getCurrentPosition(function(position){
+console.log(position);
+
+mapboxgl.accessToken = 'pk.eyJ1IjoiY2hha2tpMTIzNCIsImEiOiJjank0YndpdmEwcmR2M2RvYmg4Nmt2cDA2In0.KW4LaVBSpf4FaThVBefOuA';
+
+let map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/mapbox/streets-v11',
+    center: [position.coords.longitude, position.coords.latitude],
+    zoom: 14
+});
+
+let marker = new mapboxgl.Marker({
+    draggable: true
+})
+    .setLngLat([position.coords.longitude, position.coords.latitude])
+    .addTo(map);
+
+marker.on(`dragend`, ()=>{
+changed = 1;
+lnglat = marker.getLngLat();
+console.log('====');
+console.log(lnglat.lng);
+console.log(lnglat.lat);
+});
+
+$(`#savebtn`).on(`click`, ()=>{
+console.log(`clicked`);
+$(`#notify`).show();
+$(`#notify`).addClass(`animated heartBeat`);
+$(`#notify`).on(`animationend`, function(){
+$(this).removeClass(`animated heartBeat`);
+});
+if(changed==1)
+$.ajax({ 
+    url: `/updatelocation`,
+    type: 'POST',
+    data: `lng=${lnglat.lng}&lat=${lnglat.lat}`,
+    success: function(result){
+        console.log(`done`);
+    }
+ });
+if(changed==0){
+$.ajax({ 
+    url: `/updatelocation`,
+    type: 'POST',
+    data: `lng=${position.coords.longitude}&lat=${position.coords.latitude}`,
+    success: function(result){
+        console.log(result);
+    }
+ });
+}
+});
+
+});
+
+
+
+
+</script>
+
+</body>
+</html>

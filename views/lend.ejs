@@ -1,0 +1,59 @@
+<% include ./partials/headernav.ejs %>
+
+<h1 style='color:  rgb(153, 155, 152); text-align: center; font-size: 4rem; margin-top: 5%;'>Lend</h1>
+<hr style='width: 50%'>
+
+
+<div style="width: 40%; height: 55%; position: absolute;left: 30%; top: 37%; box-shadow: 5px 5px 20px grey; color: rgb(153, 155, 152);" class="p-2">
+    <h1 style="text-align: center;">FORM</h1>
+    <hr style="width: 50%;">
+    <% if(msg.length) { %>
+    <div class="alert alert-danger" role="alert">
+       <%=msg%>
+    </div>
+    <% } %>
+    <% if(msg2.length) { %>
+        <div class="alert alert-success" role="alert">
+           <%=msg2%>
+        </div>
+    <% } %>
+<form action="/lenddetails" method="POST" enctype="multipart/form-data" >
+<label for="title">Title of the Book</label>
+<input id='title'  name = 'title' type="text" style="display: block" required>
+<label id = 'bpic' class="mt-3">A picture of the book</label>
+<input type="file" name='pic' style="display: block;" id='bpic' accept="image/*" >
+<label for='datee' class="mt-3" >Till what date can you lend your book</label>
+<input id='datee' name="datee" type="date" style="display: block;" required>
+<label for="description" class="mt-3">Description</label>
+<input id='description' name = 'description' style="display: block" type="text" required>
+<button class="btn btn-dark mt-3" >Submit</button>
+</form>
+</div>
+
+<% include ./partials/footer.ejs %>
+
+<script>
+
+let current = new Date();
+
+$(`#description`).on(`click`, function(){
+console.log(typeof $('#datee').val());
+let chdt = new Date($('#datee').val());
+if(chdt>current){
+    if($(`#msgerr`)){
+        $(`#msgerr`).hide(1000);
+    }
+}
+if(chdt<current){ 
+$(`<div id='msgerr' class="alert alert-danger" role="alert">
+  Invalid date
+</div>`).insertAfter(`#datee`);
+$(`#datee`).addClass(`animated shake`).val(null).on(`animated`, function(){
+$(this).removeClass(`animated shake`);
+});
+}
+});
+</script>
+
+<!-- <div style=" background-image: url(https://images.unsplash.com/photo-1519682337058-a94d519337bc?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1350&q=80); width: 40%; height: 40%; margin-left: 5%; margin-top: 8%; background-size: contain; box-shadow: 5px 5px 20px black;">
+</div> -->

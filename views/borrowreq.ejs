@@ -1,0 +1,70 @@
+<% include ./partials/headernav.ejs %>
+<div id='useralert' class="alert alert-danger" role="alert">
+    You cannot borrow your own book
+</div>
+<div id='borrowreq' class="alert alert-success" role="alert">
+        Sent request
+    </div>
+<div id='bkdet' style="width: 40%; height: 55%; position: absolute;left: 55%; top: 15%; box-shadow: 5px 5px 20px grey; color: rgb(153, 155, 152);" class="p-2">
+    <h1 style="text-align: center;" >BOOK DETAILS</h1>    
+    <img src="<%=book.picpath%>" alt="No image" style ="width: 60%; height: 40%; margin: 3% auto; display: block; ">
+    <hr style="width: 50%;" >
+    <h4 class="mt-5">Title: <%=book.btitle%></h4>
+    <h4>Description: <%=book.bdes%></h3>
+    <h4>Has to be returned by : <%=book.brdate%></h4>    
+</div>
+
+<script>
+
+$(`#useralert`).hide();
+$(`#borrowreq`).hide();
+
+let requested = 0;
+let xhr = new XMLHttpRequest();
+    xhr.onload = function(){
+        let parsed = JSON.parse(this.responseText);
+        console.log(parsed);
+        
+
+    $(`<div style="width: 40%; height: 35%; position: absolute;left: 10%; top: 15%; box-shadow: 5px 5px 20px grey; color: rgb(153, 155, 152);" class="p-2">
+  <h1 style="text-align: center;" class='lenderhd' >LENDER DETAILS</h1>
+ <hr style="width: 50%;" >
+ <h4>Username: ${parsed.username}</h4>
+ <h4>Hostel:${parsed.hostel}</h4>
+ <h4>Mobile number: ${parsed.mnum}</h4>
+ <h4>Year of study: ${parsed.year}</h4>  
+ <button class = 'btn btn-dark' id='req' >Request for the book </button>   
+</div>
+ `).insertBefore(`#bkdet`);
+
+  $(`#req`).on(`click`, function(){
+    $(`#req`).addClass(`disabled`);
+    if(`${parsed.username}`==`<%=user%>`){
+        $(`#useralert`).show(1000);
+    }else {
+   $.ajax({ url: `/addborrow`,
+     success : function(result){ 
+         console.log(result);
+        $(`#borrowreq`).show(1000);
+     }, 
+     type: `POST`, 
+     data: `lendername=${parsed.username}&borrowname=<%=user%>&booktitle=<%=book.btitle%>&picpath=<%=book.picpath%>&lenderbookid=<%=book._id%>`
+    });
+}
+  });
+
+  for(let j=0; j<parsed.borrowreqrec.length; ++j){
+          if(parsed.borrowreqrec[j].borrowername=='<%=user%>'&&parsed.borrowreqrec[j].lenderbookid==`<%=book._id%>`){
+            $(`#req`).text(`Requested`).addClass(`disabled`);
+          }
+       }
+
+}
+ 
+xhr.open(`POST`, `/reqborrow/details`, true);
+xhr.setRequestHeader(`Content-Type`, `application/x-www-form-urlencoded`);
+xhr.send(`id=<%=book._id%>`);
+
+</script>
+
+<% include ./partials/footer.ejs %>

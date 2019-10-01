@@ -1,0 +1,344 @@
+<% include ./partials/headernav.ejs %>
+
+<% if(msg.length) { %>
+<div class="alert alert-success container" role="alert">
+        <%=msg%>
+ </div>
+ <% } %>
+
+ <div  style= "height: 30%; width: 80%; margin: 5% auto; box-shadow: 5px 5px 30px grey; color:  rgb(153, 155, 152);" class = "p-3" >
+    <h1 style="text-align: center" >BOOKSHARE</h1>
+    <hr style="width: 50%">
+    <p style="text-align: center">An app designed for NITT students to share their books and learn more.Hope you enjoy using the app.</p>
+ </div>
+
+ <script>
+let xhr = new XMLHttpRequest();
+
+
+ $.ajax({
+     url: '/usernotifyborrow',
+     async: false,
+     type: 'POST',
+     success: function(result){
+     
+      let parsed  = JSON.parse(result),
+          parsed2;
+
+      if(parsed.borrow.length){
+       $(` <h1 style="text-align: center; color: rgb(153, 155, 152);">BORROW REQUESTS</h1>
+ <hr style="width: 50%;" >`).appendTo($(`body`));
+      }
+
+      for(let i=parsed.borrow.length-1;i>=0; --i){
+      
+        $(` <div style="width: 40%; height: 40%; margin: 3% auto; box-shadow: 5px 5px 20px grey; color: rgb(153, 155, 152);" class="p-2">
+      <img src="${parsed.borrow[i].picpath}" alt="No image" style="width: 40%; height:100%;float: left; margin-right: 10px;" >
+      <h4 style="display: inline-block; margin-top: 2%; max-width: 40%; overflow: scroll;" >Requested: ${parsed.borrow[i].lendername.toUpperCase()}</h4>
+      <div id='mndet${i}'>
+      <h4 style="display: block; margin-top: 0%; margin-bottom: 2%; max-width: 40%; max-height: 40px; overflow: scroll;">Book Title: ${parsed.borrow[i].booktitle.toUpperCase()}</h4>
+      <button  id='statusinfobtn${i}' type="button" class="btn btn-dark requestbtn${i}">
+       Request status  <span class="badge badge-light">${parsed.borrow[i].borrowstatus.toUpperCase()}</span> 
+      </button>
+      </div>
+      </div>`).appendTo($(`body`)); 
+      
+
+      if(parsed.borrow[i].borrowstatus==`approved`&&parsed.borrow[i].collectedstatus=='notcollected'){
+
+         xhr.onload = function(){
+         parsed2 = JSON.parse(this.responseText);
+        console.log(parsed2);
+          $(` <div  id='contactdet${i}' style= "height: 85%; width: 80%; margin: 5% auto; box-shadow: 5px 5px 30px grey; color:  rgb(153, 155, 152);" class = "p-3" >
+  <h1 style="text-align: center" >CONTACT DETAILS</h1>
+  <hr style="width: 50%">
+  <p style="text-align: center">USERNAME: ${parsed2.username} </p>
+  <p style="text-align: center">HOSTEL: ${parsed2.hostel}</p>
+  <p style="text-align: center">MOBILE NUMBER: ${parsed2.mnum}</p>
+  <div style='position: absolute; width: 50%; height: 50%; margin-left: 15%;' id='map${i}'></div>
+</div>`).appendTo($(`body`));
+      }
+      xhr.open(`POST`, `/usernotifyborrow`, false);
+      xhr.setRequestHeader(`Content-Type`, `application/x-www-form-urlencoded`);
+      xhr.send(`user=${parsed.borrow[i].lendername}`);
+     
+      $(`#contactdet${i}`).hide();
+
+      $(`<button type="button" id='contactbtn${i}' class="btn btn-dark">
+      Contact lender 
+      </button>`).appendTo($(`#mndet${i}`));
+
+      $(`#contactbtn${i}`).on(`click`, function(){
+ if(parsed2.location.lng!=0){  
+$(`#contactdet${i}`).toggle();   
+mapboxgl.accessToken = 'pk.eyJ1IjoiY2hha2tpMTIzNCIsImEiOiJjank0YndpdmEwcmR2M2RvYmg4Nmt2cDA2In0.KW4LaVBSpf4FaThVBefOuA';
+
+let map = new mapboxgl.Map({
+    container: `map${i}`,
+    style: 'mapbox://styles/mapbox/streets-v11',
+    center: [parsed2.location.lng, parsed2.location.lat],
+    zoom: 14
+});
+
+let marker = new mapboxgl.Marker({
+    draggable: true
+})
+    .setLngLat([parsed2.location.lng, parsed2.location.lat])
+    .addTo(map);
+  
+    window.scrollBy(0, 1000);     
+  }else{
+    $(`#contactdet${i}`).css(`height`, `30%`);
+    $(`#map${i}`).hide();
+    $(`#contactdet${i}`).toggle();
+    window.scrollBy(0, 1000);     
+  }
+  }); 
+         
+      $(`<button type="button" id='collbtn${i}' class="btn btn-dark mt-3">
+      Collected book
+      </button>`).appendTo($(`#mndet${i}`));
+
+      $(`#collbtn${i}`).on(`click`, function(){
+
+       $(`#collbtn${i}`).hide(1000);
+       $(`#contactbtn${i}`).hide(1000);
+         
+
+        let xhr2 = new XMLHttpRequest(),
+            bookdetpar;
+         xhr2.onload = function(){
+          bookdetpar = JSON.parse(this.responseText);
+        $(`<h4 id='collectedrpt${i}' style="margin-top: 2%;">You have collected the book</h4>`).appendTo($(`#mndet${i}`));
+       $(`<h4 style="margin-top: 2%;">Return by: ${bookdetpar.brdate}</h4>`).appendTo($(`#mndet${i}`));
+       $(`<button id="retbtn${i}" class='btn btn-primary'>Returned the book </button>`).appendTo($(`#mndet${i}`));
+         let tdate = new Date();
+         checkdate = new Date(`${bookdetpar.brdate}`); 
+         if(tdate.getMonth()==checkdate.getMonth()&&checkdate.getDate()-tdate.getDate()<=5){
+          if(checkdate.getDate()-tdate.getDate()==0){
+            $(`<div class="alert alert-danger mt-4" id='useralert${i}'  role="alert">
+            You have  to return the book today
+        </div> `).appendTo($(`#mndet${i}`));   
+          }else if(checkdate.getDate()-tdate.getDate()<0){
+            $(`<div class="alert alert-danger mt-4" id='useralert${i}'  role="alert">
+            Please return the book as soon as possible
+        </div> `).appendTo($(`#mndet${i}`));
+          }else{
+          $(`<div class="alert alert-warning mt-4" id='useralert${i}'  role="alert">
+            ${checkdate.getDate()-tdate.getDate()} days to return the book
+        </div> `).appendTo($(`#mndet${i}`));    
+         }   
+      }
+        }
+         xhr2.open(`POST`, `/findinfolend`, false);
+         xhr2.setRequestHeader(`Content-Type`, `application/x-www-form-urlencoded`);
+         xhr2.send(`id=${parsed.borrow[i].lenderbookid}`);
+         
+         $(`#retbtn${i}`).on(`click`, function(){
+           console.log(parsed2);
+           let xhr4 = new XMLHttpRequest();
+           xhr4.onload = function(){
+             console.log(this.responseText);
+             location.reload();
+           }
+           xhr4.open(`POST`, `/updatereturnstatus`, false);
+           xhr4.setRequestHeader(`Content-Type`, `application/x-www-form-urlencoded`);
+           xhr4.send(`bookid=${parsed.borrow[i].lenderbookid}`);
+         });
+
+         let xhr3 = new XMLHttpRequest();
+         xhr3.open(`POST`, `/updatecollstatus`, false);
+         xhr3.onload = function(){
+           console.log(this.responseText);
+         }
+         xhr3.setRequestHeader(`Content-Type`,`application/x-www-form-urlencoded`);
+         xhr3.send(`bookid=${parsed.borrow[i].lenderbookid}&lendername=${parsed2.username}`);
+      
+    });
+    }
+
+    if(parsed.borrow[i].borrowstatus==`approved`&&parsed.borrow[i].collectedstatus=='collected'&&parsed.borrow[i].returnstatus=='notreturn'){
+     
+      let todate = new Date(),
+          expdate;
+      
+      let xhr2 = new XMLHttpRequest(),
+            bookdetpar;
+         xhr2.onload = function(){
+          bookdetpar = JSON.parse(this.responseText);
+          $(`<h4 id='collectedrpt${i}' style="margin-top: 2%;">You have collected the book</h4>`).appendTo($(`#mndet${i}`));
+       $(`<h4 id='returninfotag${i}' style="margin-top: 2%;">Return by: ${bookdetpar.brdate}</h4>`).appendTo($(`#mndet${i}`));
+       $(`<button id="retbtn${i}" class='btn btn-primary'>Returned the book </button>`).appendTo($(`#mndet${i}`));
+          expdate = new Date(`${bookdetpar.brdate}`);
+          if(expdate.getMonth()==todate.getMonth()&&expdate.getDate()-todate.getDate()<=5){
+            if(expdate.getDate()-todate.getDate()==0){
+              $(`<div class="alert alert-danger mt-4" id='useralert${i}'  role="alert">
+            You have  to return the book today;
+        </div> `).appendTo($(`#mndet${i}`));
+            }else if(expdate.getDate()-todate.getDate()<0){
+              $(`<div class="alert alert-danger mt-4" id='useralert${i}'  role="alert">
+            Please return the book as soon as possible
+        </div> `).appendTo($(`#mndet${i}`));    
+            }else{
+            $(`<div class="alert alert-warning mt-4" id='useralert${i}'  role="alert">
+            ${expdate.getDate()-todate.getDate()} days to return the book
+        </div> `).appendTo($(`#mndet${i}`));  
+            }    
+      }
+          }
+         xhr2.open(`POST`, `/findinfolend`, false);
+         xhr2.setRequestHeader(`Content-Type`, `application/x-www-form-urlencoded`);
+         xhr2.send(`id=${parsed.borrow[i].lenderbookid}`);
+
+         $(`#retbtn${i}`).on(`click`, function(){
+           let xhr4 = new XMLHttpRequest();
+           xhr4.onload = function(){
+             console.log(this.responseText);
+             location.reload();
+           }
+           xhr4.open(`POST`, `/updatereturnstatus`, false);
+           xhr4.setRequestHeader(`Content-Type`, `application/x-www-form-urlencoded`);
+           xhr4.send(`bookid=${parsed.borrow[i].lenderbookid}`);
+         });
+       }
+      
+       if(parsed.borrow[i].borrowstatus==`approved`&&parsed.borrow[i].collectedstatus=='collected'&&parsed.borrow[i].returnstatus=='returned'){
+        $(`<h4 style="margin-top: 5%;">You have returned the  book</h4>`).appendTo($(`#mndet${i}`)); 
+      }
+
+  }
+},
+     data: 'user=<%=user%>'
+   });
+
+   //==========================================================
+
+   $.ajax({
+     url: '/usernotifyborrowreqrec',
+     async: false,
+     type: 'POST',
+     success: function(result){
+      let parsed  = JSON.parse(result);
+      let printhd = 0;
+      console.log(parsed);
+      
+      if(parsed.borrowreqrec.length){
+      for(let z=parsed.borrowreqrec.length-1;z>=0; --z){
+           if(parsed.borrowreqrec[z].hide=='false')
+           printhd = 1; 
+      }
+    }
+
+      if(printhd == 1){
+       $(` <h1 style="text-align: center; color: rgb(153, 155, 152);">BORROW REQUESTS YOU RECEIVED</h1>
+ <hr style="width: 50%;" >`).appendTo($(`body`));
+      }
+      for(let i=parsed.borrowreqrec.length-1;i>=0; --i){
+        if(parsed.borrowreqrec[i].hide=='false'){
+       $(`<div id='mndetb${i}' style="width: 40%; height: 40%; margin: 3% auto; box-shadow: 5px 5px 20px grey; color: rgb(153, 155, 152);" class="p-2">
+      <img src="${parsed.borrowreqrec[i].picpath}" alt="No image" style="width: 40%; height:100%;float: left; margin-right: 10px;" >
+      <h4 style=" max-width: 40%; overflow: scroll;">Requested by: ${parsed.borrowreqrec[i].borrowername.toUpperCase()}</h4>
+      <div>
+      <h4 style=" margin-top:0%; margin-bottom: 2%; max-width: 40%; max-height: 40px; overflow: scroll;">Book Title: ${parsed.borrowreqrec[i].booktitle.toUpperCase()}</h4>
+      <button type="button" class="btn btn-dark requestbtn${i}">
+       Request status  <span class="badge badge-light">${parsed.borrowreqrec[i].borrowstatus.toUpperCase()}</span> 
+      </button>
+      <a  id='confm${i}' style='color: white' href='del/${parsed.borrowreqrec[i].lenderbookid}/${parsed.borrowreqrec[i].lendername}/${parsed.borrowreqrec[i].borrowername}'  class = 'btn btn-dark'>Confirm request</a>
+      <button  id='hidebtn${i}' style='color: white' class = 'btn btn-dark'>Hide</button>
+      </div>
+      </div>`).appendTo($(`body`));       
+      $(`#hidebtn${i}`).on(`click`, ()=>{
+        console.log('clicked');
+        let lastaj = new XMLHttpRequest();
+            lastaj.onload = function(){
+             window.location.reload();
+            }
+          lastaj.open(`GET`, `/updatehide/${parsed.borrowreqrec[i]._id}`, false);
+          lastaj.send();  
+      });
+      if(parsed.borrowreqrec[i].borrowstatus==`approved`){
+       $(`#confm${i}`).hide();
+       $(`#hidebtn${i}`).hide();
+       $(`<button id='contactborbtn${i}' class='btn btn-dark mt-2'>Contact borrower</button>`).appendTo($(`#mndetb${i}`));
+
+       $(`#contactborbtn${i}`).on(`click`, function(){
+      $(this).addClass(`disabled`);
+      let xhr5 = new XMLHttpRequest();
+        
+  xhr5.onload = function(){ 
+    let userdet = JSON.parse(this.responseText);
+$(` <div  id='contactdetb${i}' style= "height: 80%; width: 80%; margin: 5% auto; box-shadow: 5px 5px 30px grey; color:  rgb(153, 155, 152);" class = "p-3" >
+<h1 style="text-align: center" >CONTACT DETAILS</h1>
+<hr style="width: 50%">
+<p style="text-align: center">USERNAME: ${userdet.username} </p>
+<p style="text-align: center">HOSTEL: ${userdet.hostel}</p>
+<p style="text-align: center">MOBILE NUMBER: ${userdet.mnum}</p>
+<div style='position: absolute; width: 50%; height: 50%; margin-left: 15%;' id='mapb${i}'></div>
+</div>`).insertAfter($(`#mndetb${i}`));
+if(userdet.location.lng==0){
+  $(`#contactdetb${i}`).css(`height`, `30%`);
+  $(`#mapb${i}`).hide();
+  window.scrollBy(0, 500);
+}else{
+ 
+  mapboxgl.accessToken = 'pk.eyJ1IjoiY2hha2tpMTIzNCIsImEiOiJjank0YndpdmEwcmR2M2RvYmg4Nmt2cDA2In0.KW4LaVBSpf4FaThVBefOuA';
+
+let map = new mapboxgl.Map({
+    container: `mapb${i}`,
+    style: 'mapbox://styles/mapbox/streets-v11',
+    center: [userdet.location.lng, userdet.location.lat],
+    zoom: 14
+});
+
+let marker = new mapboxgl.Marker({
+    draggable: true
+})
+    .setLngLat([userdet.location.lng, userdet.location.lat])
+    .addTo(map);  
+    window.scrollBy(0, 800);
+  }
+}
+  xhr5.open(`POST`, `/userdetbyname`, false);
+  xhr5.setRequestHeader(`Content-Type`, `application/x-www-form-urlencoded`);
+  xhr5.send(`username=${parsed.borrowreqrec[i].borrowername}`);
+
+});
+       if(parsed.borrowreqrec[i].collectedstatus=='collected'&&parsed.borrowreqrec[i].returnstatus=='notreturn'){
+            let xhr2 = new XMLHttpRequest(),
+            bookdetpar;
+         xhr2.onload = function(){
+          bookdetpar = JSON.parse(this.responseText);
+          $(`<h4 id='collinfob${i}'style="margin-top: 2%;">Your book has been collected </h4>`).appendTo($(`#mndetb${i}`));
+          $(`<h4 id='returninfob${i}'style="margin-top: 2%;">Your book will be returned by: ${bookdetpar.brdate}</h4>`).appendTo($(`#mndetb${i}`));
+          let todaydate = new Date();
+              remdate = new Date(`${bookdetpar.brdate}`);
+          if(todaydate.getMonth()==remdate.getMonth()&&remdate.getDate()-todaydate.getDate()<=5){ 
+            if(remdate.getDate()-todaydate.getDate()<=0){
+              $(`<div class="alert alert-danger mt-4 " id='useralertb${i}'  role="alert">
+            Please contact borrower and collect your book 
+        </div>`).appendTo(`#mndetb${i}`) 
+            } else { 
+          $(`<div class="alert alert-warning mt-4 " id='useralertb${i}'  role="alert">
+            ${remdate.getDate()-todaydate.getDate()} days to return the book
+        </div>`).appendTo(`#mndetb${i}`) 
+            }    
+      }
+          }
+         xhr2.open(`POST`, `/findinfolend`, false);
+         xhr2.setRequestHeader(`Content-Type`, `application/x-www-form-urlencoded`);
+         xhr2.send(`id=${parsed.borrowreqrec[i].lenderbookid}`);
+        }
+        if(parsed.borrowreqrec[i].collectedstatus=='collected'&&parsed.borrowreqrec[i].returnstatus=='returned'){
+          $(`<h4 style="margin-top: 5%;">Your book has been returned</h4>`).appendTo($(`#mndetb${i}`));
+          $(`#contactborbtn${i}`).hide(); 
+        }
+      }  
+    }
+  }
+  },
+     data: 'user=<%=user%>'
+   });   
+
+ </script>
+
+<% include ./partials/footer.ejs %>
